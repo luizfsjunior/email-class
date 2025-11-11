@@ -1,0 +1,92 @@
+# GitHub Actions - CD Pipeline
+# Deploy automático para produção
+
+name: CD - Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:  # Permite trigger manual
+
+env:
+  BACKEND_IMAGE: email-classifier-backend
+  FRONTEND_IMAGE: email-classifier-frontend
+
+jobs:
+  # Deploy Backend para Render
+  deploy-backend:
+    name: Deploy Backend to Render
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to Render
+        env:
+          RENDER_API_KEY: ${{ secrets.RENDER_API_KEY }}
+          RENDER_SERVICE_ID: ${{ secrets.RENDER_BACKEND_SERVICE_ID }}
+        run: |
+          curl --request POST \
+            --url https://api.render.com/v1/services/$RENDER_SERVICE_ID/deploys \
+            --header "Authorization: Bearer $RENDER_API_KEY" \
+            --header "Content-Type: application/json" \
+            --data '{"clearCache": false}'
+      
+      - name: Wait for deployment
+        run: sleep 30
+      
+      - name: Health check
+        run: |
+          curl --fail https://${{ secrets.RENDER_BACKEND_URL }}/health || exit 1
+
+  # Deploy Frontend para Vercel
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./client
+          vercel-args: '--prod'
+
+  # Alternativa: Deploy para Google Cloud Run
+  # deploy-backend-gcp:
+  #   name: Deploy Backend to Cloud Run
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   
+  #   steps:
+  #     - name: Checkout code
+  #       uses: actions/checkout@v4
+  #     
+  #     - name: Authenticate to Google Cloud
+  #       uses: google-github-actions/auth@v1
+  #       with:
+  #         credentials_json: ${{ secrets.GCP_SA_KEY }}
+  #     
+  #     - name: Set up Cloud SDK
+  #       uses: google-github-actions/setup-gcloud@v1
+  #     
+  #     - name: Build and Push to GCR
+  #       run: |
+  #         gcloud builds submit --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/email-classifier-backend ./server
+  #     
+  #     - name: Deploy to Cloud Run
+  #       run: |
+  #         gcloud run deploy email-classifier-backend \
+  #           --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/email-classifier-backend \
+  #           --platform managed \
+  #           --region us-central1 \
+  #           --allow-unauthenticated \
+  #           --set-env-vars="OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}"

@@ -1,0 +1,65 @@
+# Docker Compose - Orquestração de containers para desenvolvimento local
+# Backend (FastAPI) + Frontend (React) + SQLite
+
+services:
+  # Backend FastAPI
+  backend:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: email-classifier-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_HOST=0.0.0.0
+      - APP_PORT=8000
+      - APP_ENV=development
+      - DATABASE_URL=sqlite:///./data/db.sqlite3
+      - CORS_ORIGINS=http://localhost:5173,http://localhost:3000
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - LLM_MODEL=${LLM_MODEL:-gpt-4o-mini}
+    volumes:
+      # Mount código para hot-reload em desenvolvimento
+      - ./server/app:/app/app
+      - ./server/scripts:/app/scripts
+      - ./data:/app/data
+      - ./models:/app/models
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - email-classifier-network
+
+  # Frontend React
+  frontend:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+      target: builder  # Usa apenas stage de build em dev
+    container_name: email-classifier-frontend
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    volumes:
+      - ./client/src:/app/src
+      - ./client/public:/app/public
+      - ./client/index.html:/app/index.html
+    command: npm run dev -- --host
+    depends_on:
+      - backend
+    networks:
+      - email-classifier-network
+
+networks:
+  email-classifier-network:
+    driver: bridge
+
+# Notas:
+# - Para produção, use builds sem volumes e comandos de produção
+# - SQLite é compartilhado via volume ./data
+# - OPENAI_API_KEY deve ser definida no arquivo .env na raiz

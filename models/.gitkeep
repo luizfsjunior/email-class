@@ -1,0 +1,5 @@
+# Models directory
+# Trained baseline models will be stored here
+# Add .pkl files to .gitignore to avoid committing large models
+
+# This file ensures the directory is tracked by git

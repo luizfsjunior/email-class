@@ -1,0 +1,114 @@
+# GitHub Actions - CI Pipeline
+# Executa testes, lint e validações em cada push/PR
+
+name: CI - Tests and Lint
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  # Backend tests
+  backend-tests:
+    name: Backend Tests (Python)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        working-directory: ./server
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      
+      - name: Download NLTK data
+        run: python -c "import nltk; nltk.download('stopwords', quiet=True)"
+      
+      - name: Run flake8 (linting)
+        working-directory: ./server
+        run: |
+          flake8 app/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 app/ --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+      
+      - name: Run pytest
+        working-directory: ./server
+        env:
+          DATABASE_URL: sqlite:///./test_db.sqlite3
+          APP_ENV: testing
+        run: |
+          pytest tests/ -v --tb=short
+      
+      - name: Test training script
+        working-directory: ./server
+        run: |
+          python scripts/train_baseline.py
+
+  # Frontend tests
+  frontend-tests:
+    name: Frontend Tests (Node.js)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: ./client/package-lock.json
+      
+      - name: Install dependencies
+        working-directory: ./client
+        run: npm ci
+      
+      - name: Run lint
+        working-directory: ./client
+        run: npm run lint
+      
+      - name: Build frontend
+        working-directory: ./client
+        env:
+          VITE_API_URL: http://localhost:8000
+        run: npm run build
+
+  # Docker build test
+  docker-build:
+    name: Docker Build Test
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      
+      - name: Build backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./server
+          push: false
+          tags: email-classifier-backend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      
+      - name: Build frontend image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./client
+          push: false
+          tags: email-classifier-frontend:test
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
