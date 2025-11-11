@@ -41,24 +41,8 @@ jobs:
         run: |
           curl --fail https://${{ secrets.RENDER_BACKEND_URL }}/health || exit 1
 
-  # Deploy Frontend para Vercel
-  deploy-frontend:
-    name: Deploy Frontend to Vercel
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-      
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        with:
-          vercel-token: ${{ secrets.VERCEL_TOKEN }}
-          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
-          working-directory: ./client
-          vercel-args: '--prod'
+  # NOTA: Deploy do frontend é automático pelo Vercel via GitHub integration
+  # Não é necessário fazer deploy via CLI aqui
 
   # Alternativa: Deploy para Google Cloud Run
   # deploy-backend-gcp:
