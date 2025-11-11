@@ -99,7 +99,7 @@ class ApiService {
   /**
    * Busca status de uma análise
    */
-  async getStatus(analysisId: string): Promise<any> {
+  async getStatus(analysisId: string): Promise<ProcessResponse> {
     const response = await fetch(`${this.baseUrl}/api/status/${analysisId}`);
 
     if (!response.ok) {
