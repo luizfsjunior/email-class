@@ -41,8 +41,32 @@ jobs:
         run: |
           curl --fail https://${{ secrets.RENDER_BACKEND_URL }}/health || exit 1
 
+  # Frontend health check
+  verify-frontend:
+    name: Verify Frontend Deployment
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Wait for Vercel deployment
+        run: sleep 60
+      
+      - name: Check frontend is accessible
+        run: |
+          curl --fail https://email-class.vercel.app || exit 1
+      
+      - name: Check API connection from frontend
+        run: |
+          RESPONSE=$(curl -s https://email-class.vercel.app)
+          if echo "$RESPONSE" | grep -q "Email Classifier"; then
+            echo "✅ Frontend está respondendo corretamente"
+          else
+            echo "❌ Frontend não está respondendo como esperado"
+            exit 1
+          fi
+
   # NOTA: Deploy do frontend é automático pelo Vercel via GitHub integration
-  # Não é necessário fazer deploy via CLI aqui
 
   # Alternativa: Deploy para Google Cloud Run
   # deploy-backend-gcp:
