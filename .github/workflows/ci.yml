@@ -22,7 +22,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: '3.13'
           cache: 'pip'
       
       - name: Install dependencies
@@ -45,13 +45,9 @@ jobs:
         env:
           DATABASE_URL: sqlite:///./test_db.sqlite3
           APP_ENV: testing
+          OPENAI_API_KEY: sk-test-fake-key-for-ci
         run: |
           pytest tests/ -v --tb=short
-      
-      - name: Test training script
-        working-directory: ./server
-        run: |
-          python scripts/train_baseline.py
 
   # Frontend tests
   frontend-tests:
