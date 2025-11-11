@@ -4,10 +4,10 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { apiService } from '../services/api';
+import { apiService, ProcessResponse } from '../services/api';
 
 interface EmailFormProps {
-  onResult: (result: any) => void;
+  onResult: (result: ProcessResponse) => void;
   onError: (error: string) => void;
 }
 

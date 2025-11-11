@@ -7,14 +7,14 @@ import { useState, useEffect } from 'react';
 import { EmailForm } from './components/EmailForm';
 import { ResultDisplay } from './components/ResultDisplay';
 import { History } from './components/History';
-import { apiService, ProcessResponse } from './services/api';
+import { apiService, ProcessResponse, HealthResponse } from './services/api';
 import { historyStorage, HistoryItem } from './lib/storage';
 
 function App() {
   const [result, setResult] = useState<ProcessResponse | null>(null);
   const [error, setError] = useState<string>('');
   const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [healthStatus, setHealthStatus] = useState<any>(null);
+  const [healthStatus, setHealthStatus] = useState<HealthResponse | null>(null);
 
   // Carrega histórico e health status na inicialização
   useEffect(() => {
@@ -23,7 +23,7 @@ function App() {
     // Check health
     apiService.checkHealth()
       .then(setHealthStatus)
-      .catch(() => setHealthStatus({ status: 'error' }));
+      .catch(() => setHealthStatus(null));
   }, []);
 
   const handleResult = (newResult: ProcessResponse) => {
@@ -57,7 +57,7 @@ function App() {
     setResult(null);
   };
 
-  const handleFeedback = async (feedback: any) => {
+  const handleFeedback = async (feedback: { analysis_id: string; edited_reply?: string; rating?: number }) => {
     try {
       await apiService.submitFeedback(feedback);
       // Poderia mostrar toast de sucesso aqui

@@ -8,7 +8,7 @@ import { ProcessResponse } from '../services/api';
 
 interface ResultDisplayProps {
   result: ProcessResponse;
-  onFeedback?: (feedback: any) => void;
+  onFeedback?: (feedback: { analysis_id: string; edited_reply?: string; rating?: number }) => void;
 }
 
 export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onFeedback }) => {
