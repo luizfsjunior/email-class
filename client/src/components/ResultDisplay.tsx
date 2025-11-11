@@ -17,14 +17,6 @@ export const ResultDisplay: React.FC<ResultDisplayProps> = ({ result, onFeedback
   const [rating, setRating] = useState<number>(0);
   const [copied, setCopied] = useState(false);
 
-  // DEBUG: Log do resultado recebido
-  console.log('🎯 RESULTADO FRONTEND:', {
-    categoria: result.category,
-    confianca: result.confidence,
-    razao: result.reason,
-    model: result.model_used
-  });
-
   const categoryColor = result.category === 'Produtivo' 
     ? 'bg-green-100 text-green-800 border-green-200'
     : 'bg-gray-100 text-gray-800 border-gray-200';

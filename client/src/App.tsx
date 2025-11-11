@@ -27,15 +27,6 @@ function App() {
   }, []);
 
   const handleResult = (newResult: ProcessResponse) => {
-    // DEBUG: Log da resposta da API
-    console.log('📥 RESPOSTA DA API:', {
-      categoria: newResult.category,
-      confianca: newResult.confidence,
-      razao: newResult.reason,
-      model: newResult.model_used,
-      id: newResult.id
-    });
-    
     setResult(newResult);
     setError('');
 
