@@ -1,8 +1,3 @@
-/**
- * EmailForm Component - Formulário principal para upload/texto
- * Permite upload de arquivo .txt/.pdf ou colar texto direto
- */
-
 import React, { useState, useRef } from 'react';
 import { apiService, ProcessResponse } from '../services/api';
 
@@ -22,7 +17,6 @@ export const EmailForm: React.FC<EmailFormProps> = ({ onResult, onError }) => {
     
     if (!selectedFile) return;
 
-    // Valida extensão
     const validExtensions = ['.txt', '.pdf'];
     const fileExtension = selectedFile.name.toLowerCase().match(/\.[^.]+$/)?.[0];
     
@@ -31,14 +25,13 @@ export const EmailForm: React.FC<EmailFormProps> = ({ onResult, onError }) => {
       return;
     }
 
-    // Valida tamanho (1MB)
     if (selectedFile.size > 1048576) {
       onError('Arquivo muito grande (máximo 1MB)');
       return;
     }
 
     setFile(selectedFile);
-    setText(''); // Limpa texto se arquivo foi selecionado
+    setText('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -67,7 +60,6 @@ export const EmailForm: React.FC<EmailFormProps> = ({ onResult, onError }) => {
 
       onResult(result);
       
-      // Limpa form após sucesso
       setText('');
       setFile(null);
       if (fileInputRef.current) {

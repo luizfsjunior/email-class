@@ -36,14 +36,11 @@ async def process_email(
     """
     settings = get_settings()
     
-    # Validação: precisa de file OU text
     if not file and not text:
         raise HTTPException(status_code=400, detail="Envie um arquivo ou texto")
     
     try:
-        # 1. Extração de texto
         if file:
-            # Valida tamanho
             file_bytes = await file.read()
             if len(file_bytes) > settings.MAX_UPLOAD_SIZE:
                 raise HTTPException(status_code=413, detail="Arquivo muito grande (máx 1MB)")
@@ -55,23 +52,15 @@ async def process_email(
         if len(extracted_text) < 10:
             raise HTTPException(status_code=400, detail="Texto muito curto")
         
-        # 2. Preprocessamento
-        clean = clean_text(extracted_text, remove_stopwords=False)  # Mantém stopwords para LLM
+        clean = clean_text(extracted_text, remove_stopwords=False)
         summary = extract_summary(extracted_text)
         
-        # 3. Classificação usando LLM
         ai_client = get_ai_client()
         classification = await ai_client.classify_email(clean)
         model_used = f"{settings.LLM_MODEL}"
         
-        # DEBUG: Log da classificação
-        logger.info(f"🔍 CLASSIFICAÇÃO:")
-        logger.info(f"   Categoria: {classification['category']}")
-        logger.info(f"   Confiança: {classification['confidence']}")
-        logger.info(f"   Razão: {classification.get('reason')}")
-        logger.info(f"   Texto (primeiros 100 chars): {extracted_text[:100]}...")
+        logger.info(f"Classificação: {classification['category']} ({classification['confidence']*100:.0f}%)")
         
-        # 4. Geração de resposta
         reply_result = await ai_client.generate_reply(
             category=classification["category"],
             summary=summary,
@@ -79,7 +68,6 @@ async def process_email(
         )
         suggested_reply = reply_result["reply"]
         
-        # 5. Salva no banco
         analysis_id = str(uuid.uuid4())
         db = get_database()
         
@@ -96,7 +84,6 @@ async def process_email(
         
         db.save_analysis(analysis_data)
         
-        # 6. Retorna resultado
         return ProcessResponse(
             id=analysis_id,
             category=classification["category"],
@@ -121,12 +108,10 @@ async def submit_feedback(feedback: FeedbackRequest):
     try:
         db = get_database()
         
-        # Valida que análise existe
         analysis = db.get_analysis(feedback.analysis_id)
         if not analysis:
             raise HTTPException(status_code=404, detail="Análise não encontrada")
         
-        # Salva feedback
         feedback_data = feedback.model_dump()
         success = db.save_feedback(feedback_data)
         

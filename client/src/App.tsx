@@ -1,8 +1,3 @@
-/**
- * App.tsx - Aplicação principal do Email Classifier
- * SPA React + TypeScript + Tailwind para classificação de emails
- */
-
 import { useState, useEffect } from 'react';
 import { EmailForm } from './components/EmailForm';
 import { ResultDisplay } from './components/ResultDisplay';
@@ -16,11 +11,9 @@ function App() {
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [healthStatus, setHealthStatus] = useState<HealthResponse | null>(null);
 
-  // Carrega histórico e health status na inicialização
   useEffect(() => {
     setHistory(historyStorage.getHistory());
     
-    // Check health
     apiService.checkHealth()
       .then(setHealthStatus)
       .catch(() => setHealthStatus(null));
@@ -30,7 +23,6 @@ function App() {
     setResult(newResult);
     setError('');
 
-    // Adiciona ao histórico
     const historyItem: HistoryItem = {
       id: newResult.id,
       category: newResult.category,
@@ -51,7 +43,6 @@ function App() {
   const handleFeedback = async (feedback: { analysis_id: string; edited_reply?: string; rating?: number }) => {
     try {
       await apiService.submitFeedback(feedback);
-      // Poderia mostrar toast de sucesso aqui
     } catch (err) {
       console.error('Erro ao enviar feedback:', err);
     }
